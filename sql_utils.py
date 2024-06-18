@@ -15,8 +15,8 @@ try:  # пробуем подключиться к бд
         password=password,
         database=database
     )
-except Exception as _ex:  # если ошибка
-    print("[INFO] Error while connecting to database", _ex)
+except Exception as _ex:  # если ошибка то выводим ее в консоль
+    print(" --- [INFO] Error while connecting to database", _ex)
 
 
 def find_user(tg_userid: str):

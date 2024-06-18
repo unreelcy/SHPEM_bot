@@ -4,15 +4,18 @@ from aiogram.filters import Command
 from datetime import datetime
 import text
 from utils import *
+from sql_utils import *
 
 
 router = Router()
 
 
-@router.message(Command("start"))
+@router.message(Command("start"))  # при /start проверяем есть ли чел в базе данных
 async def start_handler(msg: Message):
-
-    await msg.answer(text.greet_unknown_user % {'username': msg.from_user.username})
+    if find_user(str(msg.from_user.id)):
+        await msg.answer(text.greet_user % {'username': msg.from_user.username})
+    else:
+        await msg.answer(text.greet_unknown_user % {'username': msg.from_user.username})
 
 
 # @router.message(F.document)
