@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.filters import Command
 from datetime import datetime
-from text import *
+import text
 from utils import *
 
 
@@ -12,7 +12,7 @@ router = Router()
 @router.message(Command("start"))
 async def start_handler(msg: Message):
 
-    await msg.answer(greet_unknown_user % {'username': msg.from_user.username})
+    await msg.answer(text.greet_unknown_user % {'username': msg.from_user.username})
 
 
 # @router.message(F.document)
