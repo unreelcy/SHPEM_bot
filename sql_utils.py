@@ -10,15 +10,15 @@ from dotenv import load_dotenv
 DeclBase = declarative_base()
 
 
-def create_event_table(tablename):
-    class Event_Table(DeclBase):
-        __tablename__ = tablename
-        id = Column(Integer, primary_key=True)
-        book_count = Column(Integer)
-        booking_date = Column(DateTime)
-
-    load_dotenv()
-    BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env файла
+# def create_event_table(tablename):
+#     class Event_Table(DeclBase):
+#         __tablename__ = tablename
+#         id = Column(Integer, primary_key=True)
+#         book_count = Column(Integer)
+#         booking_date = Column(DateTime)
+#
+#     load_dotenv()
+#     BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env файла
 
 
 
