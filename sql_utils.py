@@ -1,44 +1,164 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, Float, String, DateTime, BigInteger, SmallInteger, Boolean
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.dialects.postgresql import JSONB
 from os import getenv
 from dotenv import load_dotenv
+import psycopg2
+from psycopg2 import Error
+from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
-DeclBase = declarative_base()
+load_dotenv()
+db_username = getenv('DATA_BASE_USERNAME')
+db_pass = getenv('DATA_BASE_PASSWORD')
+db_host = getenv('DATA_BASE_HOST')
+db_name = getenv('DATA_BASE_NAME')
+db_port = getenv('DATA_BASE_PORT')
 
 
-# def create_event_table(tablename):
-#     class Event_Table(DeclBase):
-#         __tablename__ = tablename
-#         id = Column(Integer, primary_key=True)
-#         book_count = Column(Integer)
-#         booking_date = Column(DateTime)
-#
-#     load_dotenv()
-#     BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env файла
+class usersoverlaps(Exception):
+    def __init__(self, key, record):
+        self.message = f'НАЙДЕНО НЕСКОЛЬКО ПОЛЬЗОВАТЕЛЕЙ по уникальному ключу = {key}\n лог: {record}'
 
 
+def manual_sql_query():
+    try:
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute(f"update")
+        record = cursor.fetchall()
 
-#
-# try:  # пробуем подключиться к бд
-#     load_dotenv()
-#     host = getenv('DATA_BASE_HOST')
-#     user = getenv('DATA_BASE_USER')
-#     password = getenv('DATA_BASE_PASSWORD')
-#     database = getenv('DATA_BASE_DBNAME_USERLIST')
-#
-#     connection = psycopg2.connect(
-#         host=host,
-#         user=user,
-#         password=password,
-#         database=database
-#     )
-# except Exception as _ex:  # если ошибка то выводим ее в консоль
-#     print(" --- [INFO] Error while connecting to database", _ex)
-#
-#
-# def find_user(tg_userid: str):
-#     pass
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(tg_user_id, record)
+
+    except (Exception, Error) as err:
+        print(err)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
+def find_user(tg_user_id: int):
+    ''' если пользователь есть в ДБ - вернуть "is_enabled" иначе None или ошибку'''
+
+    try:
+        # Подключение к базе данных
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        # Курсор для выполнения операций с базой данных
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT is_enable from tg_users WHERE tg_user_id = {tg_user_id}")
+        record = cursor.fetchall()
+
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(tg_user_id, record)
+
+    except (Exception, Error) as err:
+        raise err
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+def get_tg_id(user_id: int) -> int:
+    ''' получить из ДБ "tg_user_id" с помощью "user_id" '''
+    try:
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT tg_user_id from tg_users WHERE user_id = {user_id}")
+        record = cursor.fetchall()
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(user_id, record)
+
+    except (Exception, Error) as err:
+        print(err)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
+def get_user_id(tg_user_id: int) -> int:
+    ''' получить из ДБ "user_id" с помощью "tg_user_id" '''
+    try:
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT user_id from tg_users WHERE tg_user_id = {tg_user_id}")
+        record = cursor.fetchall()
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(tg_user_id, record)
+
+    except (Exception, Error) as err:
+        print(err)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
+def get_fio(user_id: int) -> str:
+    ''' получить name из БД по user_id'''
+    try:
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT name from tg_users WHERE user_id = {user_id}")
+        record = cursor.fetchall()
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(user_id, record)
+
+    except (Exception, Error) as err:
+        print(err)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
+
+
+def is_admin(user_id):
+    try:
+        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT is_admin from tg_users WHERE user_id = {user_id}")
+        record = cursor.fetchall()
+
+        if record:
+            if len(record) == 1:
+                return record[0][0]
+            else:
+                raise usersoverlaps(user_id, record)
+
+    except (Exception, Error) as err:
+        print(err)
+
+    finally:
+        if connection:
+            cursor.close()
+            connection.close()
