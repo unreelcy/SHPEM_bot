@@ -4,18 +4,19 @@ import psycopg2
 from psycopg2 import Error
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
+
 load_dotenv()
-db_username = getenv('DATA_BASE_USERNAME')
-db_pass = getenv('DATA_BASE_PASSWORD')
-db_host = getenv('DATA_BASE_HOST')
-db_name = getenv('DATA_BASE_NAME')
-db_port = getenv('DATA_BASE_PORT')
+db_user = str(getenv('DATA_BASE_USERNAME'))
+db_pass = str(getenv('DATA_BASE_PASSWORD'))
+db_host = str(getenv('DATA_BASE_HOST'))
+db_name = str(getenv('DATA_BASE_NAME'))
+db_port = int(getenv('DATA_BASE_PORT'))
 
 
 def open_connect():
     ''' Подключение к базе данных '''
     try:
-        connection = psycopg2.connect(user=db_username, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection = psycopg2.connect(user=db_user, password=db_pass, host=db_host, port=db_port, database=db_name)
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         return connection
 
@@ -125,3 +126,19 @@ def do_log(cursor,
 
     except (Exception, Error) as err:
         print(err)
+
+
+def get_all_users(cursor):
+    cursor.execute('SELECT * FROM tg_users ORDER BY user_id')
+    records = cursor.fetchall()
+    return records
+
+
+def add_user_in_db(cursor, tg_user_id, username, data):
+    user_id = get_all_users(cursor)[-1][0] + 1
+
+    cursor.execute(f"INSERT INTO tg_users VALUES ({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}', true, false);")
+
+
+if __name__  == "__main__":
+    pass

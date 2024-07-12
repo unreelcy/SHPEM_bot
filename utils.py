@@ -2,8 +2,13 @@ import datetime
 import sql_utils
 
 
-def add_user(tg_user_id, username, phone_number, name):
-    pass
+def add_user(tg_user_id, username, data):
+    connection = sql_utils.open_connect()
+    cursor = connection.cursor()
+
+    sql_utils.add_user_in_db(cursor, tg_user_id, username, data)
+
+    sql_utils.close_connect(connection, cursor)
 
 
 def make_log(tg_user_id, msg_id, msg_text, bot_answer, error_text=''):
@@ -23,4 +28,5 @@ def check_user(tg_user_id):
     sql_utils.close_connect(connection, cursor)
 
     return is_enable
+
 
