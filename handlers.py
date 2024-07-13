@@ -93,8 +93,10 @@ async def event_info_handler(msg: Message):
             InlineKeyboardButton(text='Забронировать место',
                                  callback_data=f'{keyboard.CallbackData.make_book}+{event_id}')]]
         ))
+        make_log(msg.from_user.id, msg.message_id, msg.text, event_info)
     else:
         await msg.answer(event_info, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[keyboard.event_list_bt]]))
+        make_log(msg.from_user.id, msg.message_id, msg.text, event_info)
 
 
 @router.message(Command("start"))  # при /start проверяем есть ли чел в базе данных
