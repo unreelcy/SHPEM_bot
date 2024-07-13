@@ -85,7 +85,7 @@ def get_user_id(cursor, tg_user_id: int) -> int:
 
 
 def get_fio(cursor, user_id: int) -> str:
-    ''' получить name из БД по user_id'''
+    ''' получить name из БД по user_id '''
     try:
         cursor.execute(f"SELECT name from tg_users WHERE user_id = {user_id}")
         record = cursor.fetchall()
@@ -138,7 +138,3 @@ def add_user_in_db(cursor, tg_user_id, username, data):
     user_id = get_all_users(cursor)[-1][0] + 1
 
     cursor.execute(f"INSERT INTO tg_users VALUES ({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}', true, false);")
-
-
-if __name__ == "__main__":
-    pass

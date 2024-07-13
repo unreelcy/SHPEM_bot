@@ -28,5 +28,3 @@ def check_user(tg_user_id):
     sql_utils.close_connect(connection, cursor)
 
     return is_enable
-
-

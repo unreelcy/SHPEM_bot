@@ -20,6 +20,7 @@ from aiogram.fsm.context import FSMContext  # управление состоя�
 
 
 router = Router()
+
 """
 ИЗМЕНИТЬ МОЙ tg_user_id на 321138226
 """
