@@ -140,5 +140,5 @@ def add_user_in_db(cursor, tg_user_id, username, data):
     cursor.execute(f"INSERT INTO tg_users VALUES ({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}', true, false);")
 
 
-if __name__  == "__main__":
+if __name__ == "__main__":
     pass
