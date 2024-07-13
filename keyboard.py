@@ -11,7 +11,10 @@ class CallbackData:
     last_page = 'last_page'
     next_page = 'next_page'
     tag_sort = 'tag'
+    make_book = 'make_book'
 
+
+event_list_bt = InlineKeyboardButton(text='Список мероприятий 🗓️', callback_data=CallbackData.event_list)
 
 contact_send_kb = ReplyKeyboardMarkup(
     keyboard=[
@@ -23,7 +26,7 @@ contact_send_kb = ReplyKeyboardMarkup(
 main_menu_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text='Список мероприятий 🗓️', callback_data=CallbackData.event_list),
+            event_list_bt,
             InlineKeyboardButton(text='Мои брони 📋', callback_data=CallbackData.my_events)
         ],
         [
@@ -59,3 +62,4 @@ to_main_menu_kb = InlineKeyboardMarkup(
         ]
     ]
 )
+

@@ -138,3 +138,21 @@ def add_user_in_db(cursor, tg_user_id, username, data):
     user_id = get_all_users(cursor)[-1][0] + 1
 
     cursor.execute(f"INSERT INTO tg_users VALUES ({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}', true, false);")
+
+
+def get_all_events(cursor):
+    cursor.execute("SELECT * FROM events")
+    records = cursor.fetchall()
+    return records
+
+
+def get_one_event(cursor, event_id):
+    cursor.execute(f'SELECT * FROM events WHERE event_id = {event_id}')
+    records = cursor.fetchall()
+    return records
+
+
+def get_event_group(cursor, leader_event_id):
+    cursor.execute(f'SELECT * FROM events WHERE leader_event_id = {leader_event_id}')
+    records = cursor.fetchall()
+    return records

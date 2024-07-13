@@ -1,13 +1,15 @@
 # База aiogram
 from aiogram import Router, F  # обработчики
-from aiogram.types import Message, CallbackQuery  # типы
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton  # типы
 from aiogram.filters import Command  # фильтры
 
+
 # Важные модули
-from datetime import datetime  # время и дата
+import re
 
 # Свои модули
 import text  # тексты сообщений
+import utils
 from utils import *  # общие утилиты
 import sql_utils  # утилиты работы с бд
 from keyboard import CallbackData
@@ -28,14 +30,16 @@ router = Router()
 '''------- FSM HANDLERS -------'''
 
 
-@router.message(Registration.phone_number)
+@router.message(Registration.phone_number)  # первый этап регистрации
 async def contact_handler(msg: Message, state: FSMContext):
     if msg.contact:
         await msg.answer(text.Regis.successful_contact)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.successful_contact)
         await state.update_data(phone_number=msg.contact.phone_number)
         await state.set_state(Registration.name)
     else:
         await msg.answer(text.Regis.retry_contact_send, reply_markup=keyboard.contact_send_kb)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.retry_contact_send)
 
 
 @router.message(Registration.name)
@@ -50,13 +54,14 @@ async def name_handler(msg: Message, state: FSMContext):
         try:
             add_user(msg.from_user.id, msg.from_user.username, data)
             await msg.answer(text.Regis.successful_name, reply_markup=keyboard.to_main_menu_kb)
-
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.successful_name)
         except Exception as excp:
             print(excp)
             await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
     else:
         await msg.answer(text.Regis.retry_name_send)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.retry_contact_send)
 
 
 """----- CALLBACK HANDLERS ----"""
@@ -71,10 +76,25 @@ async def main_menu_handler(callback_query: CallbackQuery):
 @router.callback_query(F.data == CallbackData.event_list)
 async def event_list_handler(callback_query: CallbackQuery):
     await callback_query.answer()
-    await callback_query.message.edit_text(text.Menus.event_list, reply_markup=keyboard.event_list_kb)
+    await callback_query.message.edit_text(utils.check_events(), reply_markup=keyboard.event_list_kb)
 
 
 """---- COMMAND HANDLERS ------"""
+
+
+@router.message(F.text.regexp(r'\/event_[0-9]+'))
+async def event_info_handler(msg: Message):
+    event_id = int(msg.text.split('/event_')[1])
+    print(event_id)
+    event_info, status = get_event_info(event_id)
+    if status == 'single' and event_info[0] == '🟩':
+        await msg.answer(event_info, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
+            keyboard.event_list_bt,
+            InlineKeyboardButton(text='Забронировать место',
+                                 callback_data=f'{keyboard.CallbackData.make_book}+{event_id}')]]
+        ))
+    else:
+        await msg.answer(event_info, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[keyboard.event_list_bt]]))
 
 
 @router.message(Command("start"))  # при /start проверяем есть ли чел в базе данных
@@ -86,16 +106,20 @@ async def start_handler(msg: Message, state: FSMContext):
             await state.set_state(Registration.phone_number)
             await msg.answer(text.Greet.unknown_user % {'username': msg.from_user.username},
                              reply_markup=keyboard.contact_send_kb)
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.unknown_user)
 
         elif is_enable:  # если он есть и активен
             await msg.answer(text.Greet.greet_user % {'username': msg.from_user.username}, reply_markup=keyboard.main_menu_kb)
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.greet_user % {'username': msg.from_user.username})
 
         else:  # если есть и забанен
             await msg.answer(text.Greet.banned_user % {'username': msg.from_user.username})
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.banned_user % {'username': msg.from_user.username})
 
     except Exception as excp:
         await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-        print(excp)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
+
 
 """------- SECRET HANDLER -----"""
 
@@ -109,22 +133,28 @@ async def myau_handler(msg: Message):
 """------- OTHER HANDLERS ------"""
 
 
-@router.message()  # при пустом / неизвестном сообщении проверяем есть ли чел в базе данных
-async def unknown_handler(msg: Message, state=FSMContext):
+@router.message(Command("start"))  # при /start проверяем есть ли чел в базе данных
+async def start_handler(msg: Message, state: FSMContext):
     # check user
     try:
         is_enable = check_user(msg.from_user.id)
         if is_enable is None:  # если юзера нет в БД
-            await state.set_state(Registration.phone_number)  # меняем
+            await state.set_state(Registration.phone_number)
             await msg.answer(text.Greet.unknown_user % {'username': msg.from_user.username},
                              reply_markup=keyboard.contact_send_kb)
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.unknown_user)
 
         elif is_enable:  # если он есть и активен
-            await msg.answer(text.Greet.greet_user % {'username': msg.from_user.username}, reply_markup=keyboard.main_menu_kb)
+            await msg.answer(text.Greet.greet_user % {'username': msg.from_user.username},
+                             reply_markup=keyboard.main_menu_kb)
+            make_log(msg.from_user.id, msg.message_id, msg.text,
+                     text.Greet.greet_user % {'username': msg.from_user.username})
 
         else:  # если есть и забанен
             await msg.answer(text.Greet.banned_user % {'username': msg.from_user.username})
+            make_log(msg.from_user.id, msg.message_id, msg.text,
+                     text.Greet.banned_user % {'username': msg.from_user.username})
 
     except Exception as excp:
         await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-        print(excp)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
