@@ -1,5 +1,7 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
 
+import text
+
 
 class CallbackData:
     event_list = 'event_list'
@@ -14,11 +16,14 @@ class CallbackData:
     make_book = 'make_book'
 
 
-event_list_bt = InlineKeyboardButton(text='Список мероприятий 🗓️', callback_data=CallbackData.event_list)
+event_list_bt = InlineKeyboardButton(text=text.Bts.event_list, callback_data=CallbackData.event_list)
+about_bt = InlineKeyboardButton(text=text.Bts.about, url='https://integred.ru/')
+main_menu_bt = InlineKeyboardButton(text=text.Bts.main_menu, callback_data=CallbackData.main_menu)
+
 
 contact_send_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Отправить номер телефона 📱", request_contact=True)]
+        [KeyboardButton(text=text.Bts.send_contact, request_contact=True)]
     ],
     one_time_keyboard=True)
 
@@ -27,38 +32,54 @@ main_menu_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
             event_list_bt,
-            InlineKeyboardButton(text='Мои брони 📋', callback_data=CallbackData.my_events)
+            InlineKeyboardButton(text=text.Bts.my_books, callback_data=CallbackData.my_events)
         ],
         [
-            InlineKeyboardButton(text='О Школе ℹ️', url='https://integred.ru/'),
-            InlineKeyboardButton(text='Подарок 🎁', callback_data=CallbackData.gift),
-            InlineKeyboardButton(text='Помощь ❓', callback_data=CallbackData.help)
+            about_bt,
+            InlineKeyboardButton(text=text.Bts.gift, callback_data=CallbackData.gift),
+            InlineKeyboardButton(text=text.Bts.help, callback_data=CallbackData.help)
         ]
     ])
 
-event_list_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text='⬅️ Предыдущяя страница', callback_data=CallbackData.last_page),
-            InlineKeyboardButton(text='Cлеудущая страница ➡️', callback_data=CallbackData.next_page)
-        ],
-        [
-            InlineKeyboardButton(text='Сортировка по тегам', callback_data=CallbackData.tag_sort),
-            InlineKeyboardButton(text='Основное меню', callback_data=CallbackData.main_menu)
-        ]
-    ])
-my_events_kb = InlineKeyboardMarkup(
-    inline_keyboard=[
-        [
-            InlineKeyboardButton(text='О Школе ℹ️', url='https://integred.ru/')
-        ]
-    ]
-)
+
+def make_event_list_kb(last_page_data, next_page_data):
+    pages = []
+    if last_page_data:
+        pages.append(InlineKeyboardButton(text=text.Bts.last_page,
+                                          callback_data=f'CallbackData.last_page+{last_page_data}'))
+    if next_page_data:
+        pages.append(InlineKeyboardButton(text=text.Bts.next_page,
+                                          callback_data=f'CallbackData.next_page+{next_page_data}'))
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            pages,
+            [
+                InlineKeyboardButton(text=text.Bts.tag_sort, callback_data=CallbackData.tag_sort),
+                main_menu_bt
+            ]
+        ])
+
+
+def make_my_events_kb(last_page_data, next_page_data):
+    pages = []
+    if last_page_data:
+        pages.append(InlineKeyboardButton(text=text.Bts.last_page,
+                                          callback_data=f'CallbackData.last_page+{last_page_data}'))
+    if next_page_data:
+        pages.append(InlineKeyboardButton(text=text.Bts.next_page,
+                                          callback_data=f'CallbackData.next_page+{next_page_data}'))
+    return InlineKeyboardMarkup(inline_keyboard=
+                                [
+                                    pages,
+                                    [event_list_bt, main_menu_bt]
+
+                                ])
+
 
 to_main_menu_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            InlineKeyboardButton(text='Основное Меню', callback_data=CallbackData.main_menu)
+            main_menu_bt
         ]
     ]
 )
