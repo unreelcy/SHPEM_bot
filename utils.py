@@ -1,5 +1,8 @@
 from datetime import datetime
+
+import keyboard
 import sql_utils
+import text
 
 
 def add_user(tg_user_id, username, data):
@@ -33,7 +36,8 @@ def check_user(tg_user_id):
 def generate_online_offline_marker_time(event: list) -> tuple:
     if event[3] == 0:
         offline = ''
-
+    elif event[3] == -1:
+        offline = '<b>Оффлайн</b> - <i>Мест неограничено</i>'
     elif event[3] == event[5]:
         offline = '<b>Оффлайн</b> - <i>Мест нет</i>'
     else:
@@ -41,12 +45,14 @@ def generate_online_offline_marker_time(event: list) -> tuple:
 
     if event[2] == 0:
         online = ''
+    elif event[2] == -1:
+        online = '<b>Онлайн</b> - <i>Мест неограничено</i>'
     elif event[2] == event[4]:
         online = '<b>Онлайн</b> - <i>Мест нет</i>'
     else:
         online = f'<b>Онлайн</b> - Свободно {event[2] - event[4]}/{event[2]}'
 
-    if (event[2] == 0 or event[2] == event[4]) and (event[3] == 0 or event[3] == event[5]):
+    if ((event[2] == 0 or event[2] == event[4]) and (event[3] == 0 or event[3] == event[5])) and event[2] != -1 and event[3] != -1:
         marker = '🟥'
     else:
         marker = '🟩'
@@ -90,26 +96,37 @@ def check_events() -> str:
 def get_event_info(event_id):
     connection = sql_utils.open_connect()
     cursor = connection.cursor()
+    records = sql_utils.get_one_event(cursor, event_id)
 
-    event = sql_utils.get_one_event(cursor, event_id)[0]
+    if records:  # если что-то нашлось с таким id
+        event = records[0]
 
-    if not event[8] or (event[8] and event[9] is not None):  # если событие без группы или отдельное событие в группе
-        status = 'single'
-        online, offline, marker, time = generate_online_offline_marker_time(event)
-        print(event)
-        descript = f'{marker} {str(event[1])} 📅 {time} \n {offline} {online}\n\nОписание:\n{event[6]}'
+        if not event[8] or (event[8] and event[9] is not None):  # если событие без группы или отдельное в группе
+            sql_utils.close_connect(connection, cursor)
+            status = 'single'
+            online, offline, marker, time = generate_online_offline_marker_time(event)
+            descript = f'{marker} {str(event[1])} 📅 {time} \n {offline} {online}\n\nОписание:\n{event[6]}'
+            if marker == '🟩':
+                return descript, status, keyboard.event_info_sample(event_id)
+            return descript, status, keyboard.event_info_sample()
 
-    else:  # если событие - заголовок группы
-        status = 'group'
-        other_events = sql_utils.get_event_group(cursor, event_id)
-        output = []
-        descript = f'▫️ {str(event[1])}\n📅:\n'
+        else:  # если событие - заголовок группы
+            status = 'group'
+            other_events = sql_utils.get_event_group(cursor, event_id)
+            sql_utils.close_connect(connection, cursor)
+            output = []
+            descript = f'▫️ {str(event[1])}\n\n'
 
-        for small_event in other_events:
-            online, offline, marker, time = generate_online_offline_marker_time(small_event)
-            small_descript = f'{marker} 📅 {time} \n {offline} {online} \nПодробнее - /event_{small_event[0]}'
-            output.append(small_descript)
-        descript = '\n\n'.join(output)
+            for small_event in other_events:
+                online, offline, marker, time = generate_online_offline_marker_time(small_event)
+                small_descript = f'{marker} 📅 {time} \n {offline} {online} \nПодробнее - /event_{small_event[0]}'
+                output.append(small_descript)
+            descript += '\n\n'.join(output)
 
-    sql_utils.close_connect(connection, cursor)
-    return descript, status
+    return text.Er.no_event, keyboard.event_info_sample(event_id)
+
+
+def make_book():
+    connection = sql_utils.open_connect()
+    cursor = connection.cursor()
+

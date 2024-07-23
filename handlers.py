@@ -7,6 +7,7 @@ from aiogram.filters import Command  # фильтры
 # Важные модули
 import re
 
+import states
 # Свои модули
 import text  # тексты сообщений
 import utils
@@ -17,7 +18,7 @@ import keyboard  # клавиатуры и inline кнопки
 
 
 # aiogram FSM модуль
-from states import Registration  # свой модули с состояниями
+import states  # свой модули с состояниями
 from aiogram.fsm.context import FSMContext  # управление состояниями
 
 
@@ -30,19 +31,19 @@ router = Router()
 '''------- FSM HANDLERS -------'''
 
 
-@router.message(Registration.phone_number)  # первый этап регистрации
+@router.message(states.Registration.phone_number)  # первый этап регистрации
 async def contact_handler(msg: Message, state: FSMContext):
     if msg.contact:
         await msg.answer(text.Regis.successful_contact)
         make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.successful_contact)
         await state.update_data(phone_number=msg.contact.phone_number)
-        await state.set_state(Registration.name)
+        await state.set_state(states.Registration.name)
     else:
         await msg.answer(text.Regis.retry_contact_send, reply_markup=keyboard.contact_send_kb)
         make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.retry_contact_send)
 
 
-@router.message(Registration.name)
+@router.message(states.Registration.name)
 async def name_handler(msg: Message, state: FSMContext):
 
     if len(msg.text.split()) >= 2:
@@ -57,8 +58,8 @@ async def name_handler(msg: Message, state: FSMContext):
             make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.successful_name)
         except Exception as excp:
             print(excp)
-            await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-            make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
+            await msg.answer(text.Er.error_db)
+            make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db)
     else:
         await msg.answer(text.Regis.retry_name_send)
         make_log(msg.from_user.id, msg.message_id, msg.text, text.Regis.retry_contact_send)
@@ -79,24 +80,22 @@ async def event_list_handler(callback_query: CallbackQuery):
     await callback_query.message.edit_text(utils.check_events(), reply_markup=keyboard.event_list_kb)
 
 
+@router.callback_query(F.data.startswith('make_book+'))
+async def book_step_one(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.answer()
+    await state.set_state(states.Booking.event_id)
+    await state.update_data(event_id=int(callback_query.data.split('+')[1]))
+    await state.set_state(states.Booking.book_type)
+
 """---- COMMAND HANDLERS ------"""
 
 
 @router.message(F.text.regexp(r'\/event_[0-9]+'))
 async def event_info_handler(msg: Message):
     event_id = int(msg.text.split('/event_')[1])
-    print(event_id)
-    event_info, status = get_event_info(event_id)
-    if status == 'single' and event_info[0] == '🟩':
-        await msg.answer(event_info, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[
-            keyboard.event_list_bt,
-            InlineKeyboardButton(text='Забронировать место',
-                                 callback_data=f'{keyboard.CallbackData.make_book}+{event_id}')]]
-        ))
-        make_log(msg.from_user.id, msg.message_id, msg.text, event_info)
-    else:
-        await msg.answer(event_info, reply_markup=InlineKeyboardMarkup(inline_keyboard=[[keyboard.event_list_bt]]))
-        make_log(msg.from_user.id, msg.message_id, msg.text, event_info)
+    event_info, status, kbd = get_event_info(event_id)
+    await msg.answer(event_info, reply_markup=kbd)
+    make_log(msg.from_user.id, msg.message_id, msg.text, event_info)
 
 
 @router.message(Command("start"))  # при /start проверяем есть ли чел в базе данных
@@ -105,7 +104,7 @@ async def start_handler(msg: Message, state: FSMContext):
     try:
         is_enable = check_user(msg.from_user.id)
         if is_enable is None:  # если юзера нет в БД
-            await state.set_state(Registration.phone_number)
+            await state.set_state(states.Registration.phone_number)
             await msg.answer(text.Greet.unknown_user % {'username': msg.from_user.username},
                              reply_markup=keyboard.contact_send_kb)
             make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.unknown_user)
@@ -119,8 +118,8 @@ async def start_handler(msg: Message, state: FSMContext):
             make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.banned_user % {'username': msg.from_user.username})
 
     except Exception as excp:
-        await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
+        await msg.answer(text.Er.error_db)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db, excp)
 
 
 """------- SECRET HANDLER -----"""
@@ -141,7 +140,7 @@ async def start_handler(msg: Message, state: FSMContext):
     try:
         is_enable = check_user(msg.from_user.id)
         if is_enable is None:  # если юзера нет в БД
-            await state.set_state(Registration.phone_number)
+            await state.set_state(states.Registration.phone_number)
             await msg.answer(text.Greet.unknown_user % {'username': msg.from_user.username},
                              reply_markup=keyboard.contact_send_kb)
             make_log(msg.from_user.id, msg.message_id, msg.text, text.Greet.unknown_user)
@@ -158,5 +157,5 @@ async def start_handler(msg: Message, state: FSMContext):
                      text.Greet.banned_user % {'username': msg.from_user.username})
 
     except Exception as excp:
-        await msg.answer(text.Er.error_db % {'username': msg.from_user.username})
-        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db % {'username': msg.from_user.username})
+        await msg.answer(text.Er.error_db)
+        make_log(msg.from_user.id, msg.message_id, msg.text, text.Er.error_db, excp)

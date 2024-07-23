@@ -31,7 +31,7 @@ def close_connect(connection, cursor):
         connection.close()
 
 
-class usersoverlaps(Exception):
+class UsersOverlaps(Exception):
     def __init__(self, key, record):
         self.message = f'НАЙДЕНО НЕСКОЛЬКО ПОЛЬЗОВАТЕЛЕЙ по уникальному ключу = {key}\n лог: {record}'
 
@@ -46,7 +46,7 @@ def find_user(cursor, tg_user_id: int):
             if len(record) == 1:
                 return record[0][0]
             else:
-                raise usersoverlaps(tg_user_id, record)
+                raise UsersOverlaps(tg_user_id, record)
 
     except (Exception, Error) as err:
         raise err
@@ -62,7 +62,7 @@ def get_tg_id(cursor, user_id: int) -> int:
             if len(record) == 1:
                 return record[0][0]
             else:
-                raise usersoverlaps(user_id, record)
+                raise UsersOverlaps(user_id, record)
 
     except (Exception, Error) as err:
         print(err)
@@ -78,7 +78,7 @@ def get_user_id(cursor, tg_user_id: int) -> int:
             if len(record) == 1:
                 return record[0][0]
             else:
-                raise usersoverlaps(tg_user_id, record)
+                raise UsersOverlaps(tg_user_id, record)
 
     except (Exception, Error) as err:
         print(err)
@@ -94,7 +94,7 @@ def get_fio(cursor, user_id: int) -> str:
             if len(record) == 1:
                 return record[0][0]
             else:
-                raise usersoverlaps(user_id, record)
+                raise UsersOverlaps(user_id, record)
 
     except (Exception, Error) as err:
         print(err)
@@ -109,7 +109,7 @@ def is_admin(cursor, user_id):
             if len(record) == 1:
                 return record[0][0]
             else:
-                raise usersoverlaps(user_id, record)
+                raise UsersOverlaps(user_id, record)
 
     except (Exception, Error) as err:
         print(err)
@@ -146,6 +146,12 @@ def get_all_events(cursor):
     return records
 
 
+def get_all_books(cursor):
+    cursor.execute("SELECT * FROM events")
+    records = cursor.fetchall()
+    return records
+
+
 def get_one_event(cursor, event_id):
     cursor.execute(f'SELECT * FROM events WHERE event_id = {event_id}')
     records = cursor.fetchall()
@@ -156,3 +162,9 @@ def get_event_group(cursor, leader_event_id):
     cursor.execute(f'SELECT * FROM events WHERE leader_event_id = {leader_event_id}')
     records = cursor.fetchall()
     return records
+
+
+def insert_book_info(cursor, event_id, tg_user_id):
+    book_id = get_all_events(cursor)[-1][0] + 1
+    user_id = get_user_id(cursor, tg_user_id)
+    cursor.execute(f"INSERT INTO books VALUES ({book_id}, ")
