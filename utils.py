@@ -134,4 +134,3 @@ def get_event_info(event_id):
 def make_book():
     connection = sql_utils.open_connect()
     cursor = connection.cursor()
-

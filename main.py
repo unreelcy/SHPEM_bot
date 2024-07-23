@@ -11,7 +11,7 @@ from handlers import router
 
 
 load_dotenv()
-BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env файла
+BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env
 
 
 async def main():

@@ -88,6 +88,7 @@ async def book_step_one(callback_query: CallbackQuery, state: FSMContext):
     await state.update_data(event_id=int(callback_query.data.split('+')[1]))
     await state.set_state(states.Booking.book_type)
 
+
 """---- COMMAND HANDLERS ------"""
 
 

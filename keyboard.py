@@ -30,15 +30,10 @@ def event_info_sample(event_id=0):
 def event_list_or_group(last_page_data='', next_page_data=''):
     pages = []
     if last_page_data:
-        InlineKeyboardButton(text=Btns.last_page, callback_data=CallbackData.last_page + last_page_data)
-
-    return InlineKeyboardMarkup(inline_keyboard=[
-            [
-                ,
-
-                InlineKeyboardButton(text=Btns.next_page, callback_data=CallbackData.next_page + next_page_data)
-             ],
-            [event_list_bt, main_menu_bt]])
+        pages.append(InlineKeyboardButton(text=Btns.last_page, callback_data=CallbackData.last_page + last_page_data))
+    if next_page_data:
+        pages.append(InlineKeyboardButton(text=Btns.next_page, callback_data=CallbackData.next_page + next_page_data))
+    return InlineKeyboardMarkup(inline_keyboard=[pages, [event_list_bt, main_menu_bt]])
 
 
 contact_send_kb = ReplyKeyboardMarkup(

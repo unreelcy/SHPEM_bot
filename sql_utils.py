@@ -164,7 +164,7 @@ def get_event_group(cursor, leader_event_id):
     return records
 
 
-def insert_book_info(cursor, event_id, tg_user_id):
+def insert_book_info(cursor, event_id, tg_user_id, book_type, count, book_datetime):
     book_id = get_all_events(cursor)[-1][0] + 1
     user_id = get_user_id(cursor, tg_user_id)
-    cursor.execute(f"INSERT INTO books VALUES ({book_id}, ")
+    cursor.execute(f"INSERT INTO books VALUES ({book_id}, {event_id}, {user_id}, {book_type}, {count}, {book_datetime})")
