@@ -4,8 +4,6 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command  # фильтры
 
 
-# Важные модули
-import re
 
 import states
 # Свои модули
@@ -71,13 +69,16 @@ async def name_handler(msg: Message, state: FSMContext):
 @router.callback_query(F.data == CallbackData.main_menu)
 async def main_menu_handler(callback_query: CallbackQuery):
     await callback_query.answer()
-    await callback_query.message.edit_text(text.Menus.main_menu, reply_markup=keyboard.main_menu_kb)
+    await callback_query.message.edit_text(text.Bts.main_menu, reply_markup=keyboard.main_menu_kb)
 
 
 @router.callback_query(F.data == CallbackData.event_list)
 async def event_list_handler(callback_query: CallbackQuery):
     await callback_query.answer()
-    await callback_query.message.edit_text(utils.check_events(), reply_markup=keyboard.event_list_kb)
+    event_list_text, next_page_data = utils.check_events()
+    await callback_query.message.edit_text(event_list_text, reply_markup=keyboard.make_event_list_kb('', next_page_data))
+
+
 
 
 @router.callback_query(F.data.startswith('make_book+'))

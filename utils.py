@@ -68,7 +68,7 @@ def generate_online_offline_marker_time(event: list) -> tuple:
     return online, offline, marker, time.strftime("%d.%m в %H:%M")
 
 
-def check_events() -> str:
+def check_events() -> tuple:
     output = []
 
     connection = sql_utils.open_connect()
@@ -90,7 +90,12 @@ def check_events() -> str:
 
     sql_utils.close_connect(connection, cursor)
 
-    return '\n\n'.join(output)
+    if len(output) > 10:
+        event_list_text = '\n\n'.join(output[:10])
+        next_page_data = '\n\n'.join(output[10:])
+        return event_list_text, next_page_data
+
+    return '\n\n'.join(output), ''
 
 
 def get_event_info(event_id):
