@@ -1,4 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton, InlineKeyboardMarkup
+
+import text
 from text import Btns
 
 
@@ -13,6 +15,8 @@ class CallbackData:
     next_page = 'next_page+'
     tag_sort = 'tag'
     make_book = 'make_book+'
+    online_type = 'book_type+online'
+    offline_type = 'book_type+offline'
 
 
 event_list_bt = InlineKeyboardButton(text=Btns.event_list, callback_data=CallbackData.event_list)
@@ -78,6 +82,19 @@ my_events_kb = InlineKeyboardMarkup(
 to_main_menu_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
+            main_menu_bt
+        ]
+    ]
+)
+
+book_type_kb = InlineKeyboardMarkup(
+    inline_keyboard= [
+        [
+            InlineKeyboardButton(text=text.Btns.offline_type, callback_data=CallbackData.offline_type),
+            InlineKeyboardButton(text=text.Btns.online_type, callback_data=CallbackData.online_type)
+         ],
+        [
+            event_list_bt,
             main_menu_bt
         ]
     ]

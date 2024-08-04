@@ -1,5 +1,6 @@
 from os import getenv
 from dotenv import load_dotenv
+from datetime import datetime
 import psycopg2
 from psycopg2 import Error
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
@@ -16,13 +17,16 @@ db_port = int(getenv('DATA_BASE_PORT'))
 def open_connect():
     ''' Подключение к базе данных '''
     try:
-        connection = psycopg2.connect(user=db_user, password=db_pass, host=db_host, port=db_port, database=db_name)
+        connection = psycopg2.connect(user=db_user,
+                                      password=db_pass,
+                                      host=db_host,
+                                      port=db_port,
+                                      database=db_name)
         connection.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         return connection
 
     except (Exception, Error) as err:
         print(err)
-        raise err
 
 
 def close_connect(connection, cursor):
@@ -49,6 +53,7 @@ def find_user(cursor, tg_user_id: int):
                 raise UsersOverlaps(tg_user_id, record)
 
     except (Exception, Error) as err:
+        print(err)
         raise err
 
 
@@ -129,16 +134,22 @@ def do_log(cursor,
 
 
 def get_all_users(cursor):
-    cursor.execute('SELECT * FROM tg_users ORDER BY user_id')
-    records = cursor.fetchall()
-    return records
+    try:
+        cursor.execute('SELECT * FROM tg_users ORDER BY user_id')
+        records = cursor.fetchall()
+        return records
+    except (Exception, Error) as err:
+        print(err)
 
 
 def add_user_in_db(cursor, tg_user_id, username, data):
     user_id = get_all_users(cursor)[-1][0] + 1
-
-    cursor.execute(f"INSERT INTO tg_users VALUES ({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}', true, false);")
-
+    try:
+        cursor.execute("INSERT INTO tg_users VALUES " +
+                       f"({user_id}, {tg_user_id}, '{username}', '{data['name']}', '{data['phone_number']}'" +
+                       ", true, false);")
+    except (Exception, Error) as err:
+        print(err)
 
 def get_all_events(cursor):
     cursor.execute("SELECT * FROM events")
@@ -164,7 +175,41 @@ def get_event_group(cursor, leader_event_id):
     return records
 
 
-def insert_book_info(cursor, event_id, tg_user_id, book_type, count, book_datetime):
+def insert_book_info(cursor, tg_user_id, data):
     book_id = get_all_events(cursor)[-1][0] + 1
     user_id = get_user_id(cursor, tg_user_id)
-    cursor.execute(f"INSERT INTO books VALUES ({book_id}, {event_id}, {user_id}, {book_type}, {count}, {book_datetime})")
+    '''
+    SQL = "INSERT INTO authors (name) VALUES (%s);" # Note: no quotes
+    data = ("O'Reilly", )
+    cur.execute(SQL, data) # Note: no % operator
+    '''
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # YYYY-MM-DD HH:MI:SS
+    SQL1 = "INSERT INTO books VALUES (%d, %d, %d, %s, %d, %s)"
+    SQL_data1 = (book_id, data['event_id'], user_id, data['book_type'], data['num_seats'], date)
+    cursor.execute(SQL1 % SQL_data1)
+
+    if data['book_type'] == 'online':
+        SQL2 = "UPDATE events SET online_booked = online_booked + %d WHERE event_id = %d"
+
+    else:
+        SQL2 = "UPDATE events SET offline_booked = offline_booked + %d WHERE event_id = %d"
+
+    SQL_data2 = (data['num_seats'], data['event_id'])
+    cursor.execute(SQL2 % SQL_data2)
+
+
+if __name__ == '__main__':
+
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # YYYY-MM-DD HH:MI:SS
+    SQL1 = "INSERT INTO books VALUES (%d, %d, %d, %s, %d, %s)"
+    SQL_data1 = (10, 22, 121212, 'online', 2, date)
+    print(SQL1 % SQL_data1)
+
+    SQL2 = "UPDATE events SET online_booked = online_booked + %d WHERE event_id = %d"
+    SQL_data2 = (2, 22)
+    print(SQL2 % SQL_data2)
+
+    SQL2 = "UPDATE events SET offline_booked = offline_booked + %d WHERE event_id = %d"
+
+    SQL_data2 = (2, 22)
+    print(SQL2 % SQL_data2)
