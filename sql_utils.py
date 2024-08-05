@@ -151,14 +151,15 @@ def add_user_in_db(cursor, tg_user_id, username, data):
     except (Exception, Error) as err:
         print(err)
 
-def get_all_events(cursor):
-    cursor.execute("SELECT * FROM events")
+
+def get_all_events(cursor):  # на самом деле не all, а только одиночки и заголовки
+    cursor.execute("SELECT * FROM events WHERE leader_event_id is NULL ORDER BY event_id LIMIT 11")
     records = cursor.fetchall()
     return records
 
 
 def get_all_books(cursor):
-    cursor.execute("SELECT * FROM events")
+    cursor.execute("SELECT * FROM books")
     records = cursor.fetchall()
     return records
 
@@ -176,7 +177,8 @@ def get_event_group(cursor, leader_event_id):
 
 
 def insert_book_info(cursor, tg_user_id, data):
-    book_id = get_all_events(cursor)[-1][0] + 1
+    book_id = get_all_books(cursor)[-1][0] + 1
+    print(get_all_books)
     user_id = get_user_id(cursor, tg_user_id)
     '''
     SQL = "INSERT INTO authors (name) VALUES (%s);" # Note: no quotes
@@ -184,32 +186,15 @@ def insert_book_info(cursor, tg_user_id, data):
     cur.execute(SQL, data) # Note: no % operator
     '''
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # YYYY-MM-DD HH:MI:SS
-    SQL1 = "INSERT INTO books VALUES (%d, %d, %d, %s, %d, %s)"
+    SQL1 = "INSERT INTO books VALUES (%s, %s, %s, %s, %s, %s)"
     SQL_data1 = (book_id, data['event_id'], user_id, data['book_type'], data['num_seats'], date)
-    cursor.execute(SQL1 % SQL_data1)
+    cursor.execute(SQL1, SQL_data1)
 
     if data['book_type'] == 'online':
-        SQL2 = "UPDATE events SET online_booked = online_booked + %d WHERE event_id = %d"
+        SQL2 = "UPDATE events SET online_booked = online_booked + %s WHERE event_id = %s"
 
     else:
-        SQL2 = "UPDATE events SET offline_booked = offline_booked + %d WHERE event_id = %d"
+        SQL2 = "UPDATE events SET offline_booked = offline_booked + %s WHERE event_id = %s"
 
     SQL_data2 = (data['num_seats'], data['event_id'])
-    cursor.execute(SQL2 % SQL_data2)
-
-
-if __name__ == '__main__':
-
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # YYYY-MM-DD HH:MI:SS
-    SQL1 = "INSERT INTO books VALUES (%d, %d, %d, %s, %d, %s)"
-    SQL_data1 = (10, 22, 121212, 'online', 2, date)
-    print(SQL1 % SQL_data1)
-
-    SQL2 = "UPDATE events SET online_booked = online_booked + %d WHERE event_id = %d"
-    SQL_data2 = (2, 22)
-    print(SQL2 % SQL_data2)
-
-    SQL2 = "UPDATE events SET offline_booked = offline_booked + %d WHERE event_id = %d"
-
-    SQL_data2 = (2, 22)
-    print(SQL2 % SQL_data2)
+    cursor.execute(SQL2, SQL_data2)

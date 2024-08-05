@@ -105,7 +105,8 @@ async def book_step_one(callback_query: CallbackQuery, state: FSMContext):
     await state.set_state(states.Booking.event_id)
     await state.update_data(event_id=int(callback_query.data.split('+')[1]))
     await state.set_state(states.Booking.book_type)
-    await callback_query.message.edit_text(text=text.Booking.book_type, reply_markup=keyboard.book_type_kb)
+    await callback_query.message.edit_text(text=text.book_type(callback_query.data),
+                                           reply_markup=keyboard.book_type_kb(callback_query.data))
 
 
 @router.callback_query(F.data.startswith('book_type+'))

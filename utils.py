@@ -77,25 +77,38 @@ def check_events() -> tuple:
     records = sql_utils.get_all_events(cursor)
 
     for event in records:
-        if not event[8]:
+        if not event[8]:  # если is_group == False
             online, offline, marker, time = generate_online_offline_marker_time(event)
 
             descript = f'{marker} {str(event[1])} 📅 {time} \n {offline} {online} \nПодробнее - /event_{event[0]}'
 
-        elif event[9] is None:
+        else:  # если is_group == True leader_event_id == NULL
             descript = f'▫️ {str(event[1])} 📅 {event[7]} \nПодробнее - /event_{event[0]}'
-        else:
-            continue
+
         output.append(descript)
 
     sql_utils.close_connect(connection, cursor)
 
     if len(output) > 10:
         event_list_text = '\n\n'.join(output[:10])
-        next_page_data = '\n\n'.join(output[10:])
+        next_page_data = '2'
         return event_list_text, next_page_data
 
     return '\n\n'.join(output), ''
+
+
+def count_free_space(event: list):
+    if event[2] == -1:
+        online = -1
+    else:
+        online = max(0, event[2] - event[4])
+
+    if event[3] == -1:
+        offline = -1
+    else:
+        offline = max(0, event[3] - event[5])
+
+    return str(online), str(offline)
 
 
 def get_event_info(event_id):
@@ -107,11 +120,15 @@ def get_event_info(event_id):
         event = records[0]
 
         if not event[8] or (event[8] and event[9] is not None):  # если событие без группы или отдельное в группе
-            sql_utils.close_connect(connection, cursor)
-            online, offline, marker, time = generate_online_offline_marker_time(event)
-            descript = f'{marker} {str(event[1])} 📅 {time} \n {offline} {online}\n\nОписание:\n{event[6]}'
+            sql_utils.close_connect(connection, cursor) # больше sql нам не нужен
+
+            online_text, offline_text, marker, time = generate_online_offline_marker_time(event)
+            descript = f'{marker} {str(event[1])} 📅 {time} \n {offline_text} {online_text}\n\nОписание:\n{event[6]}'
+
+            online, offline = count_free_space(event)
+
             if marker == '🟩':
-                return descript, keyboard.event_info_sample(event_id)
+                return descript, keyboard.event_info_sample(event_id, online, offline)
             return descript, keyboard.event_info_sample()
 
         else:  # если событие - заголовок группы
@@ -120,12 +137,12 @@ def get_event_info(event_id):
             output = [f'▫️ {str(event[1])}\n\n']
 
             for small_event in other_events:
-                online, offline, marker, time = generate_online_offline_marker_time(small_event)
-                small_descript = f'{marker} 📅 {time} \n {offline} {online} \nПодробнее - /event_{small_event[0]}'
+                online_text, offline_text, marker, time = generate_online_offline_marker_time(small_event)
+                small_descript = f'{marker} 📅 {time} \n {offline_text} {online_text} \nПодробнее - /event_{small_event[0]}'
                 output.append(small_descript)
             return
 
-    return text.Er.no_event, keyboard.event_info_sample(event_id)
+    return text.Er.no_event, keyboard.event_info_sample()
 
 
 def make_book(data, tg_user_id):

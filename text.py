@@ -17,10 +17,8 @@ class Regis:
 
 
 class Booking:
-    book_type = 'Выберите тип бронируемого места'
-    num_seats = 'Укажите количество бронируемых мест, напишите одно число.'
     retry_num_seats = 'Недостоверный формат данных, напишите одно число.'
-
+    num_seats = 'Укажите количество бронируемых мест, напишите одно число.'
 
 class Menus:
     main_menu = 'Основное меню'
@@ -51,3 +49,21 @@ def succefull_book(num_seats):
         say = f' {num_seats} мест'
 
     return 'Успешно забронировано' + say
+
+
+def book_type(callback_data):
+    data = callback_data.split('+')
+    online, offline = int(data[2]), int(data[3])
+    book_type = 'Выберите тип бронируемого места\n'
+
+    if offline == -1:
+        book_type += '\n<b>Оффлайн</b> - <i>Мест неограничено</i>'
+    elif offline > 0:
+        book_type += f'\n<b>Оффлайн</b> - Свободно {offline}'
+
+    if online == -1:
+        book_type += '\n<b>Онлайн</b> - <i>Мест неограничено</i>'
+    elif online > 0:
+        book_type += f'\n<b>Онлайн</b> - Свободно {offline}'
+
+    return book_type

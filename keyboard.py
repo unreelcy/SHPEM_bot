@@ -15,19 +15,19 @@ class CallbackData:
     next_page = 'next_page+'
     tag_sort = 'tag'
     make_book = 'make_book+'
-    online_type = 'book_type+online'
-    offline_type = 'book_type+offline'
+    online_type = 'book_type+online+'
+    offline_type = 'book_type+offline+'
 
 
 event_list_bt = InlineKeyboardButton(text=Btns.event_list, callback_data=CallbackData.event_list)
 main_menu_bt = InlineKeyboardButton(text=Btns.main_menu, callback_data=CallbackData.main_menu)
 
 
-def event_info_sample(event_id=0):
+def event_info_sample(event_id=0, online='', offline=''):
     if event_id > 0:
         return InlineKeyboardMarkup(inline_keyboard=[
             [event_list_bt, main_menu_bt],
-            [InlineKeyboardButton(text=Btns.make_book, callback_data=CallbackData.make_book + str(event_id))]])
+            [InlineKeyboardButton(text=Btns.make_book, callback_data=CallbackData.make_book + str(event_id) + '+' + online + '+' + offline)]])
     return InlineKeyboardMarkup(inline_keyboard=[[event_list_bt, main_menu_bt]])
 
 
@@ -38,6 +38,19 @@ def event_list_or_group(last_page_data='', next_page_data=''):
     if next_page_data:
         pages.append(InlineKeyboardButton(text=Btns.next_page, callback_data=CallbackData.next_page + next_page_data))
     return InlineKeyboardMarkup(inline_keyboard=[pages, [event_list_bt, main_menu_bt]])
+
+
+def book_type_kb(callback_data: str):
+    info = callback_data.split('+')[2:4]
+    online, offline = int(info[0]), int(info[1])
+    kb = []
+    if offline > 0 or offline == -1:
+        kb.append(InlineKeyboardButton(text=text.Btns.offline_type, callback_data=CallbackData.offline_type + '+' + str(offline)))
+
+    if online > 0 or online == -1:
+        kb.append(InlineKeyboardButton(text=text.Btns.online_type, callback_data=CallbackData.online_type + '+' + str(online)))
+
+    return InlineKeyboardMarkup(inline_keyboard=[kb, [event_list_bt, main_menu_bt]])
 
 
 contact_send_kb = ReplyKeyboardMarkup(
@@ -82,19 +95,6 @@ my_events_kb = InlineKeyboardMarkup(
 to_main_menu_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
-            main_menu_bt
-        ]
-    ]
-)
-
-book_type_kb = InlineKeyboardMarkup(
-    inline_keyboard= [
-        [
-            InlineKeyboardButton(text=text.Btns.offline_type, callback_data=CallbackData.offline_type),
-            InlineKeyboardButton(text=text.Btns.online_type, callback_data=CallbackData.online_type)
-         ],
-        [
-            event_list_bt,
             main_menu_bt
         ]
     ]
