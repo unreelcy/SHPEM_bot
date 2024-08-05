@@ -6,7 +6,7 @@ from psycopg2 import Error
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 
-load_dotenv()
+load_dotenv(dotenv_path="C:\.env for projects\Shpem_bot\.env")
 db_user = str(getenv('DATA_BASE_USERNAME'))
 db_pass = str(getenv('DATA_BASE_PASSWORD'))
 db_host = str(getenv('DATA_BASE_HOST'))

@@ -4,8 +4,6 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command  # фильтры
 
 
-
-import states
 # Свои модули
 import text  # тексты сообщений
 import utils

@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from handlers import router
 
 
-load_dotenv()
+load_dotenv(dotenv_path="C:\.env for projects\Shpem_bot\.env")
 BOT_TOKEN = getenv('BOT_TOKEN')  # берем api токен из .env
 
 
