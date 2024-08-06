@@ -42,13 +42,14 @@ def event_list_or_group(last_page_data='', next_page_data=''):
 
 def book_type_kb(callback_data: str):
     info = callback_data.split('+')[2:4]
+    print(info)
     online, offline = int(info[0]), int(info[1])
     kb = []
     if offline > 0 or offline == -1:
-        kb.append(InlineKeyboardButton(text=text.Btns.offline_type, callback_data=CallbackData.offline_type + '+' + str(offline)))
+        kb.append(InlineKeyboardButton(text=text.Btns.offline_type, callback_data=CallbackData.offline_type + str(offline)))
 
     if online > 0 or online == -1:
-        kb.append(InlineKeyboardButton(text=text.Btns.online_type, callback_data=CallbackData.online_type + '+' + str(online)))
+        kb.append(InlineKeyboardButton(text=text.Btns.online_type, callback_data=CallbackData.online_type + str(online)))
 
     return InlineKeyboardMarkup(inline_keyboard=[kb, [event_list_bt, main_menu_bt]])
 

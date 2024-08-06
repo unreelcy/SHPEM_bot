@@ -1,7 +1,7 @@
 class Greet:
     unknown_user = 'Приветствую, %(username)s, я бот для бронирования мест на мероприятия.\nВас нет в нашей базе, поэтому предлагаю познакомится, отправьте пожалуйста ваш номер телефона с помощью кнопки снизу.'
     greet_user = 'Здравствуйте, %(username)s, я вижу, что мы уже знакомы.\nВыберите из меню необходимые пункты.'
-    banned_user = "Сожалеем, %(username)s, вы заблокированы администраторами бота, обратитесь в поддержку."
+    banned_user = "Сожалеем, %(username)s, вы заблокированы администраторами бота, обратитесь в поддержку.\n\nАдмины:\n    @unrelcy\n    @aksikor"
 
 
 class Er:
@@ -18,7 +18,6 @@ class Regis:
 
 class Booking:
     retry_num_seats = 'Недостоверный формат данных, напишите одно число.'
-    num_seats = 'Укажите количество бронируемых мест, напишите одно число.'
 
 class Menus:
     main_menu = 'Основное меню'
@@ -67,3 +66,10 @@ def book_type(callback_data):
         book_type += f'\n<b>Онлайн</b> - Свободно {offline}'
 
     return book_type
+
+
+def num_seats(max_seats):
+    base_message = 'Укажите количество бронируемых мест, напишите одно число.\n\nМаксимальное количество - '
+    if max_seats == -1:
+        return base_message + 'не ограничено.'
+    return base_message + str(max_seats) + '.'
