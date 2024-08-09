@@ -3,6 +3,7 @@ from datetime import datetime
 import keyboard
 import sql_utils
 import text
+from config import num_events_on_page
 
 
 def add_user(tg_user_id, username, data):
@@ -74,7 +75,7 @@ def check_events() -> tuple:
     connection = sql_utils.open_connect()
     cursor = connection.cursor()
 
-    records = sql_utils.get_all_events(cursor)
+    records = sql_utils.get_all_events(cursor, num_events_on_page)
 
     for event in records:
         if not event[8]:  # если is_group == False
@@ -88,13 +89,48 @@ def check_events() -> tuple:
         output.append(descript)
 
     sql_utils.close_connect(connection, cursor)
-
-    if len(output) > 10:
-        event_list_text = '\n\n'.join(output[:10])
+    print(len(output))
+    if len(output) > num_events_on_page:
+        event_list_text = '\n\n'.join(output[:num_events_on_page])
         next_page_data = '2'
         return event_list_text, next_page_data
 
     return '\n\n'.join(output), ''
+
+
+def next_or_last_page(page_num) -> tuple:
+    output = []
+
+    connection = sql_utils.open_connect()
+    cursor = connection.cursor()
+
+    records = sql_utils.get_next_events(cursor, (int(page_num) - 1) * num_events_on_page, num_events_on_page)
+
+    for event in records:
+        if not event[8]:  # если is_group == False
+            online, offline, marker, time = generate_online_offline_marker_time(event)
+
+            descript = f'{marker} {str(event[1])} 📅 {time} \n {offline} {online} \nПодробнее - /event_{event[0]}'
+
+        else:  # если is_group == True leader_event_id == NULL
+            descript = f'▫️ {str(event[1])} 📅 {event[7]} \nПодробнее - /event_{event[0]}'
+
+        output.append(descript)
+
+    sql_utils.close_connect(connection, cursor)
+    if page_num == '1':
+        if len(output) > num_events_on_page:
+            event_list_text = '\n\n'.join(output[:num_events_on_page])
+            return event_list_text, keyboard.event_list_or_group(next_page_data=str(int(page_num) + 1))
+
+        return '\n\n'.join(output) + f'\n\nстраница {page_num}', keyboard.event_list_or_group()
+
+    if len(output) > num_events_on_page:
+        event_list_text = '\n\n'.join(output[:num_events_on_page]) + f'\n\nстраница {page_num}'
+        return event_list_text, keyboard.event_list_or_group(last_page_data=str(int(page_num) - 1),
+                                                             next_page_data=str(int(page_num) + 1))
+
+    return '\n\n'.join(output) + f'\n\nстраница {page_num}', keyboard.event_list_or_group(last_page_data=str(int(page_num) - 1))
 
 
 def count_free_space(event: list):
@@ -134,13 +170,13 @@ def get_event_info(event_id):
         else:  # если событие - заголовок группы
             other_events = sql_utils.get_event_group(cursor, event_id)
             sql_utils.close_connect(connection, cursor)
-            output = [f'▫️ {str(event[1])}\n\n']
+            output = [f'▫️ {str(event[1])}\n']
 
             for small_event in other_events:
                 online_text, offline_text, marker, time = generate_online_offline_marker_time(small_event)
                 small_descript = f'{marker} 📅 {time} \n {offline_text} {online_text} \nПодробнее - /event_{small_event[0]}'
                 output.append(small_descript)
-            return
+            return '\n\n'.join(output), keyboard.event_info_sample()
 
     return text.Er.no_event, keyboard.event_info_sample()
 
@@ -150,3 +186,7 @@ def make_book(data, tg_user_id):
     cursor = connection.cursor()
     sql_utils.insert_book_info(cursor, tg_user_id, data)
     sql_utils.close_connect(connection, cursor)
+
+
+def my_books(tg_user_id):
+    pass

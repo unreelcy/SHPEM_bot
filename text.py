@@ -19,8 +19,10 @@ class Regis:
 class Booking:
     retry_num_seats = 'Недостоверный формат данных, напишите одно число.'
 
+
 class Menus:
     main_menu = 'Основное меню'
+    help = 'За помощью обращаться к админам:\n@AksiKor\n@mrtigerfox\n\n Создатель бота - @unrelcy'
 
 
 class Btns:

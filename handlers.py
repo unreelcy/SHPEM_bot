@@ -105,9 +105,9 @@ async def main_menu_handler(callback_query: CallbackQuery, state: FSMContext):
 async def event_list_handler(callback_query: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback_query.answer()
-    event_list_text, next_page_data = utils.check_events()
+    event_list_text, next_page_data = check_events()
     await callback_query.message.edit_text(event_list_text,
-                                           reply_markup=keyboard.event_list_or_group('', next_page_data))
+                                           reply_markup=keyboard.event_list_or_group(next_page_data=next_page_data))
 
 
 @router.callback_query(F.data.startswith('make_book+'))
@@ -121,13 +121,34 @@ async def book_step_one(callback_query: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(F.data.startswith('book_type+'))
-async def book_step_one(callback_query: CallbackQuery, state: FSMContext):
+async def book_step_one_handler(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.answer()
     await state.update_data(book_type=callback_query.data.split('+')[1])
-    print(callback_query.data)
     await state.update_data(max_seats=int(callback_query.data.split('+')[2]))
     await state.set_state(states.Booking.num_seats)
     await callback_query.message.edit_text(text=text.num_seats(callback_query.data.split('+')[2]),
+                                           reply_markup=keyboard.event_info_sample())
+
+
+@router.callback_query(F.data == 'my_events')
+async def book_step_one_handler(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await callback_query.message.edit_text(text=text.Er.error_db,
+                                           reply_markup=keyboard.event_info_sample())
+
+
+@router.callback_query(F.data.startswith('last_page+'))
+@router.callback_query(F.data.startswith('next_page+'))
+async def last_page_handler(callback_query: CallbackQuery):
+    await callback_query.answer()
+    edit_text, kb = next_or_last_page(callback_query.data.split('+')[1])
+    await callback_query.message.edit_text(text=edit_text, reply_markup=kb)
+
+
+@router.callback_query(F.data == 'help')
+async def book_step_one_handler(callback_query: CallbackQuery):
+    await callback_query.answer()
+    await callback_query.message.edit_text(text=text.Menus.help,
                                            reply_markup=keyboard.event_info_sample())
 
 

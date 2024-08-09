@@ -152,8 +152,14 @@ def add_user_in_db(cursor, tg_user_id, username, data):
         print(err)
 
 
-def get_all_events(cursor):  # на самом деле не all, а только одиночки и заголовки
-    cursor.execute("SELECT * FROM events WHERE leader_event_id is NULL ORDER BY event_id LIMIT 11")
+def get_all_events(cursor, num_pages):  # на самом деле не all, а только одиночки и заголовки
+    cursor.execute(f"SELECT * FROM events WHERE leader_event_id is NULL ORDER BY event_id LIMIT {num_pages + 1}")
+    records = cursor.fetchall()
+    return records
+
+
+def get_next_events(cursor, offset, num_pages):  # на самом деле не all, а только одиночки и заголовки
+    cursor.execute(f"SELECT * FROM events WHERE leader_event_id is NULL ORDER BY event_id LIMIT {num_pages + 1} OFFSET {offset}")
     records = cursor.fetchall()
     return records
 
@@ -177,14 +183,14 @@ def get_event_group(cursor, leader_event_id):
 
 
 def insert_book_info(cursor, tg_user_id, data):
-    book_id = get_all_books(cursor)[-1][0] + 1
+    try:
+        book_id = get_all_books(cursor)[-1][0] + 1
+    except Exception:
+        book_id = 0
+
     print(get_all_books)
     user_id = get_user_id(cursor, tg_user_id)
-    '''
-    SQL = "INSERT INTO authors (name) VALUES (%s);" # Note: no quotes
-    data = ("O'Reilly", )
-    cur.execute(SQL, data) # Note: no % operator
-    '''
+
     date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # YYYY-MM-DD HH:MI:SS
     SQL1 = "INSERT INTO books VALUES (%s, %s, %s, %s, %s, %s)"
     SQL_data1 = (book_id, data['event_id'], user_id, data['book_type'], data['num_seats'], date)
@@ -198,3 +204,21 @@ def insert_book_info(cursor, tg_user_id, data):
 
     SQL_data2 = (data['num_seats'], data['event_id'])
     cursor.execute(SQL2, SQL_data2)
+
+
+def get_books(tg_user_id):
+    connection = open_connect()
+    cursor = connection.cursor()
+
+    user_id = get_user_id(cursor, tg_user_id)
+
+    cursor.execute(f"SELECT * FROM books WHERE user_id = {user_id} AND datetime")
+
+
+if __name__ == '__main__':
+    con = open_connect()
+    cur = con.cursor()
+
+    cur.execute('SELECT * FROM events')
+    rec = cur.fetchall()
+    print(*rec, sep='\n')
